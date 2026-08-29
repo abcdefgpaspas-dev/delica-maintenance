@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#12151a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="D:5整備">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>D:5 整備手帳</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#12151a; --card:#1b2029; --card2:#232a35; --line:#2e3745;
+  --tx:#e8edf4; --tx2:#9aa7b8; --tx3:#66727f;
+  --ok:#3ddc84; --soon:#ffc93c; --over:#ff5c5c; --unset:#66727f;
+  --accent:#ff8a3d;
+}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg); color:var(--tx); font-size:16px; line-height:1.5;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px);
+  -webkit-tap-highlight-color:transparent;
+}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+
+/* header */
+header{padding:20px 0 12px}
+.veh{font-size:12px;color:var(--tx3);letter-spacing:.04em}
+.odo{display:flex;align-items:flex-end;gap:10px;margin-top:6px}
+.odo b{font-size:44px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.odo span{font-size:15px;color:var(--tx2);padding-bottom:4px}
+.odo button{margin-left:auto;margin-bottom:2px}
+.sub{font-size:12px;color:var(--tx3);margin-top:6px}
+
+/* buttons */
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+.btn{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:11px 16px;font-size:14px;font-weight:600;min-height:44px}
+.btn:active{background:#2c3542}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#12151a}
+.btn.pri:active{filter:brightness(.9)}
+.btn.wide{width:100%;justify-content:center}
+.btn.sm{padding:8px 13px;font-size:13px;min-height:38px;border-radius:9px}
+
+/* banner */
+.banner{background:linear-gradient(135deg,#2a1f14,#1f2530);border:1px solid #4a3418;border-radius:14px;padding:15px 16px;margin:14px 0}
+.banner h3{font-size:14px;margin-bottom:5px;color:var(--accent)}
+.banner p{font-size:13px;color:var(--tx2);margin-bottom:11px}
+
+/* section */
+.sec{margin:26px 0 10px;font-size:12px;font-weight:700;color:var(--tx3);letter-spacing:.08em}
+
+/* card */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:9px;width:100%;text-align:left;display:block}
+.card:active{background:var(--card2)}
+.card.over{border-color:#5a2a2a}
+.ch{display:flex;align-items:center;gap:9px}
+.ch h4{font-size:16px;font-weight:600;flex:1;min-width:0}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.b-ok{background:rgba(61,220,132,.14);color:var(--ok)}
+.b-soon{background:rgba(255,201,60,.14);color:var(--soon)}
+.b-over{background:rgba(255,92,92,.15);color:var(--over)}
+.b-unset{background:rgba(102,114,127,.16);color:var(--unset)}
+.bar{height:6px;background:#2a3240;border-radius:4px;margin:11px 0 9px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px;transition:width .3s}
+.meta{display:flex;gap:12px;font-size:13px;flex-wrap:wrap}
+.meta .left{font-weight:600;font-variant-numeric:tabular-nums}
+.meta .right{color:var(--tx3);margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums}
+.note{font-size:12px;color:var(--accent);margin-top:8px;line-height:1.45}
+
+/* sheet */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:50}
+.mask.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:90vh;overflow-y:auto;background:var(--card);
+  border-radius:20px 20px 0 0;border-top:1px solid var(--line);z-index:51;transform:translateY(100%);
+  transition:transform .22s ease;padding:8px 18px calc(env(safe-area-inset-bottom) + 22px)}
+.sheet.on{transform:translateY(0)}
+@media(min-width:680px){.sheet{max-width:680px;margin:0 auto;border-radius:20px;bottom:20px;left:16px;right:16px}}
+.grab{width:38px;height:4px;background:var(--line);border-radius:3px;margin:8px auto 14px}
+.sheet h2{font-size:19px;margin-bottom:3px}
+.sheet .cat{font-size:12px;color:var(--tx3);margin-bottom:16px}
+.fld{margin-bottom:13px}
+.fld label{display:block;font-size:12px;color:var(--tx2);margin-bottom:5px}
+.fld input,.fld textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;color:var(--tx);font:inherit;font-size:16px;min-height:44px}
+.fld textarea{min-height:64px;resize:vertical;font-size:14px}
+.row{display:flex;gap:10px}
+.row>.fld{flex:1}
+.hr{height:1px;background:var(--line);margin:18px 0}
+.acts{display:flex;gap:9px;margin-top:6px}
+.acts>*{flex:1}
+.hist{font-size:13px;color:var(--tx2);max-height:150px;overflow-y:auto}
+.hist div{padding:6px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);display:flex;gap:9px;flex-wrap:wrap}
+.foot .btn{flex:1;min-width:110px}
+.tiny{font-size:11px;color:var(--tx3);margin-top:16px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="veh" id="veh"></div>
+    <div class="odo">
+      <b id="odoKm">—</b><span>km</span>
+      <button class="btn sm" id="odoBtn">距離を更新</button>
+    </div>
+    <div class="sub" id="odoSub"></div>
+    <div class="sub" id="syncSub"></div>
+  </header>
+  <div id="banner"></div>
+  <div id="list"></div>
+  <div class="foot">
+    <button class="btn" id="addBtn">＋ 項目を追加</button>
+    <button class="btn" id="expBtn">エクスポート</button>
+    <button class="btn" id="impBtn">インポート</button>
+    <button class="btn" id="cfgBtn">⚙ 同期設定</button>
+  </div>
+  <p class="tiny" id="tiny"></p>
+</div>
+
+<div class="mask" id="mask"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+<script>
+"use strict";
+const KEY='delica_d5_maint_v1', DAY=864e5, MON=30.44;
+
+/* ---------- 初期データ（車検証 令和6年11月11日 記録事項より） ---------- */
+function U(id,name,cat,km,mo,note){return{id,name,cat,type:'usage',kmCycle:km,monthCycle:mo,lastKm:null,lastDate:null,note:note||''};}
+const SEED={
+  vehicle:{name:'三菱 デリカD:5',model:'3DA-CV1W',engine:'4N14 / 2.26L クリーンディーゼル',
+           vin:'CV1W-2115719',first:'2019-11',typeNo:'19114',classNo:'0009',weight:1960,at:'8速AT'},
+  odo:{km:null,date:null},
+  odoHistory:[{date:'2022-11-04',km:15900},{date:'2024-11-11',km:24500}],
+  logs:[],
+  items:[
+    U('oil','エンジンオイル','エンジン',5000,6,'DL-1 / 0W-30。月355km ペースでは距離より期間が先に来ます'),
+    U('oilfil','オイルフィルター','エンジン',10000,12,'オイル交換2回に1回が目安'),
+    U('dpf','DPF再生・オイル量点検','ディーゼル',null,1,'★短距離走行が続くと軽油でオイルが希釈されレベルが上昇します。月イチでゲージ確認を'),
+    U('fuelfil','燃料フィルター','エンジン',40000,48,'ディーゼル固有。サイクルは整備手帳で要確認'),
+    U('air','エアクリーナー','エンジン',50000,null,'林道・砂利道が多いなら短縮'),
+    U('llc','冷却水（スーパーLLC）','エンジン',null,48,'初回は7年または16万km'),
+    U('atf','ATF（8速AT）','駆動',40000,null,'基本は無交換扱い。実施の是非は要検討'),
+    U('rot','タイヤローテーション','足回り',5000,12,'車両重量1960kg。偏摩耗しやすい'),
+    U('tpres','タイヤ空気圧','足回り',null,1,'積載時・キャンプ出発前は別途チェック'),
+    U('pad','ブレーキパッド残量点検','足回り',10000,12,''),
+    U('bf','ブレーキフルード','足回り',null,24,'車検ごと'),
+    U('batt','バッテリー','電装',null,36,''),
+    U('wiper','ワイパーゴム','快適',null,12,''),
+    U('acfil','エアコンフィルター','快適',null,12,''),
+    U('under','下回り洗浄・防錆確認','ボディ',null,6,'林道・海沿い・雪道のあとは都度'),
+    {id:'shaken',name:'車検',cat:'法定',type:'fixed',nextDate:'2026-11-17',monthCycle:24,kmCycle:null,lastKm:null,lastDate:null,note:'重量税 ¥32,800（車検証記載）'},
+    {id:'tax',name:'自動車税',cat:'法定',type:'annual',md:'05-31',monthCycle:12,kmCycle:null,lastKm:null,lastDate:null,note:'2.26L・2019年10月以降登録 → 年 43,500円 が目安'},
+    U('hoken','任意保険 更新','法定',null,12,'満期日を「前回実施日」に入れると管理できます')
+  ]
+};
+
+/* ---------- 保存 ---------- */
+let state=load();
+function load(){try{const r=localStorage.getItem(KEY);if(r){const s=JSON.parse(r);if(s&&s.items)return s;}}catch(e){}return JSON.parse(JSON.stringify(SEED));}
+function save(skipPush){localStorage.setItem(KEY,JSON.stringify(state));if(!skipPush)queuePush();}
+
+/* ---------- 日付ユーティリティ ---------- */
+function fmt(d){return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);}
+function today(){return fmt(new Date());}
+function P(s){return new Date(s+'T00:00:00');}
+function dd(a,b){return Math.round((P(b)-P(a))/DAY);}
+function addMo(s,m){const x=P(s),d=x.getDate();x.setMonth(x.getMonth()+m);if(x.getDate()<d)x.setDate(0);return fmt(x);}
+function jp(s){if(!s)return'—';const[y,m,d]=s.split('-');return `${y}/${m}/${d}`;}
+function num(n){return n==null?'—':n.toLocaleString('ja-JP');}
+function dur(n){n=Math.round(n);if(Math.abs(n)>=365)return (n/365).toFixed(1)+'年';if(Math.abs(n)>=60)return Math.round(n/MON)+'ヶ月';return n+'日';}
+
+/* ---------- 走行ペース（km/日） ---------- */
+function pace(){
+  const p=[...state.odoHistory];
+  if(state.odo.km!=null&&state.odo.date)p.push({date:state.odo.date,km:state.odo.km});
+  p.sort((a,b)=>a.date<b.date?-1:1);
+  if(p.length<2)return 11.7;
+  const f=p[0],l=p[p.length-1],d=dd(f.date,l.date),k=l.km-f.km;
+  return (d<60||k<=0)?11.7:k/d;
+}
+function estOdo(){
+  const p=[...state.odoHistory].sort((a,b)=>a.date<b.date?-1:1);
+  const l=p[p.length-1];
+  return Math.round(l.km+dd(l.date,today())*pace());
+}
+
+/* ---------- 判定 ---------- */
+function evalItem(it){
+  const t=today(),cur=state.odo.km,pk=pace();
+  if(it.type==='fixed'){
+    const dl=dd(t,it.nextDate),win=(it.monthCycle||12)*MON;
+    return{ratio:1-dl/win,daysLeft:dl,dueDate:it.nextDate,kmLeft:null,dueKm:null};
+  }
+  if(it.type==='annual'){
+    const y=new Date().getFullYear();
+    let due=y+'-'+it.md; if(dd(t,due)<0)due=(y+1)+'-'+it.md;
+    const dl=dd(t,due);
+    return{ratio:1-dl/365,daysLeft:dl,dueDate:due,kmLeft:null,dueKm:null};
+  }
+  if(!it.lastDate&&it.lastKm==null)return{unset:true,ratio:null};
+  let kr=null,dr=null,kmLeft=null,daysLeft=null,dueDate=null,dueKm=null;
+  if(it.kmCycle&&it.lastKm!=null&&cur!=null){dueKm=it.lastKm+it.kmCycle;kmLeft=dueKm-cur;kr=(cur-it.lastKm)/it.kmCycle;}
+  if(it.monthCycle&&it.lastDate){dueDate=addMo(it.lastDate,it.monthCycle);daysLeft=dd(t,dueDate);dr=1-daysLeft/(it.monthCycle*MON);}
+  const ratio=Math.max(kr==null?-9:kr, dr==null?-9:dr);
+  // 距離基準と期間基準のどちらが先に来るか
+  let byDate=(dr!=null)&&(kr==null||dr>=kr);
+  return{ratio:ratio<-1?null:ratio,kmLeft,daysLeft,dueDate,dueKm,byDate,
+         kmDays:(kmLeft!=null)?kmLeft/pk:null};
+}
+function level(r){return r==null?'unset':r>=1?'over':r>=.8?'soon':'ok';}
+const LBL={ok:'OK',soon:'そろそろ',over:'要実施',unset:'未設定'};
+const COL={ok:'var(--ok)',soon:'var(--soon)',over:'var(--over)',unset:'var(--unset)'};
+
+/* ---------- 描画 ---------- */
+function render(){
+  const v=state.vehicle;
+  document.getElementById('veh').textContent=`${v.name}　${v.model}　${v.engine}　${v.at}`;
+  document.getElementById('odoKm').textContent=state.odo.km==null?'—':num(state.odo.km);
+  document.getElementById('odoSub').textContent=state.odo.km==null
+    ? '走行距離が未入力です'
+    : `${jp(state.odo.date)} 時点　／　走行ペース 約 ${Math.round(pace()*MON)} km・月`;
+
+  // バナー
+  const b=document.getElementById('banner');b.innerHTML='';
+  if(state.odo.km==null){
+    const e=estOdo();
+    b.innerHTML=`<div class="banner"><h3>まず現在の走行距離を入力してください</h3>
+      <p>車検証の実績（2022/11/04 15,900km → 2024/11/11 24,500km）からの推定値は <b>約 ${num(e)} km</b> です。メーターの実数を入れてください。</p>
+      <button class="btn pri wide" onclick="odoSheet()">走行距離を入力</button></div>`;
+  }
+
+  const list=document.getElementById('list');list.innerHTML='';
+  const known=[],unset=[];
+  state.items.forEach(it=>{const r=evalItem(it);(r.unset?unset:known).push([it,r]);});
+  known.sort((a,b)=>(b[1].ratio??-9)-(a[1].ratio??-9));
+  if(known.length){list.appendChild(h('div','sec','管理中'));known.forEach(x=>list.appendChild(card(x[0],x[1])));}
+  if(unset.length){list.appendChild(h('div','sec','未設定 — 前回の実施日を入れると管理が始まります'));unset.forEach(x=>list.appendChild(card(x[0],x[1])));}
+
+  document.getElementById('tiny').textContent=
+    `車台番号 ${v.vin}　／　型式指定 ${v.typeNo}・類別 ${v.classNo}（部品検索に使えます）　／　初度登録 ${v.first}　／　車両重量 ${v.weight}kg
+データはこの端末のブラウザ内にのみ保存されます。整備サイクルの初期値は一般的な目安です。整備手帳で確認して各項目から上書きしてください。`;
+}
+function h(t,c,txt){const e=document.createElement(t);if(c)e.className=c;if(txt)e.textContent=txt;return e;}
+
+function card(it,r){
+  const lv=level(r.ratio),c=COL[lv];
+  const el=h('button','card'+(lv==='over'?' over':''));
+  let left='',right='';
+  if(lv==='unset'){left='<span style="color:var(--tx3)">前回の実施を記録してください</span>';}
+  else{
+    const parts=[];
+    if(r.kmLeft!=null)parts.push(`<span style="color:${r.byDate?'var(--tx2)':c}">${r.kmLeft<0?'超過 '+num(-r.kmLeft):'あと '+num(r.kmLeft)} km</span>`);
+    if(r.daysLeft!=null)parts.push(`<span style="color:${r.byDate?c:'var(--tx2)'}">${r.daysLeft<0?'超過 '+dur(-r.daysLeft):'あと '+dur(r.daysLeft)}</span>`);
+    left=parts.join('<span style="color:var(--tx3)"> ・ </span>');
+    if(it.type==='usage'){
+      if(it.lastDate||it.lastKm!=null)right=`前回 ${jp(it.lastDate)}${it.lastKm!=null?' / '+num(it.lastKm)+'km':''}`;
+    }else right=`期限 ${jp(r.dueDate)}`;
+  }
+  const w=Math.max(2,Math.min(100,(r.ratio??0)*100));
+  el.innerHTML=`<div class="ch"><h4>${it.name}</h4><span class="badge b-${lv}">${LBL[lv]}</span></div>
+    <div class="bar"><i style="width:${w}%;background:${c}"></i></div>
+    <div class="meta"><span class="left">${left}</span><span class="right">${right}</span></div>`;
+  // 距離基準が実質機能しない場合のヒント
+  if(lv!=='unset'&&it.kmCycle&&r.kmDays!=null&&r.kmDays>0&&it.monthCycle&&r.kmDays>it.monthCycle*MON*1.3){
+    el.innerHTML+=`<div class="note">今の走行ペースだと距離基準の到達は約${dur(r.kmDays)}後。期間基準（${it.monthCycle}ヶ月）で実施してください。</div>`;
+  }
+  if(lv==='unset'&&it.note)el.innerHTML+=`<div class="note" style="color:var(--tx3)">${it.note}</div>`;
+  el.onclick=()=>itemSheet(it.id);
+  return el;
+}
+
+/* ---------- シート ---------- */
+const mask=document.getElementById('mask'),sheet=document.getElementById('sheet'),sbody=document.getElementById('sheetBody');
+function open_(html){sbody.innerHTML=html;mask.classList.add('on');requestAnimationFrame(()=>sheet.classList.add('on'));}
+function close_(){sheet.classList.remove('on');mask.classList.remove('on');}
+mask.onclick=close_;
+
+function odoSheet(){
+  const e=state.odo.km==null?estOdo():state.odo.km;
+  open_(`<h2>走行距離の更新</h2><div class="cat">メーターの表示値を入れてください</div>
+    <div class="row">
+      <div class="fld"><label>走行距離 (km)</label><input id="f_km" type="number" inputmode="numeric" value="${e}"></div>
+      <div class="fld"><label>日付</label><input id="f_dt" type="date" value="${today()}"></div>
+    </div>
+    <div class="acts"><button class="btn" onclick="close_()">キャンセル</button>
+    <button class="btn pri" onclick="odoSave()">保存</button></div>`);
+  setTimeout(()=>{const i=document.getElementById('f_km');i.focus();i.select();},250);
+}
+function odoSave(){
+  const km=parseInt(document.getElementById('f_km').value,10),dt=document.getElementById('f_dt').value;
+  if(isNaN(km)||!dt){alert('走行距離と日付を入力してください');return;}
+  if(state.odo.km!=null&&state.odo.date&&state.odo.date!==dt)state.odoHistory.push({date:state.odo.date,km:state.odo.km});
+  state.odo={km,date:dt};save();close_();render();
+}
+
+function itemSheet(id){
+  const it=state.items.find(x=>x.id===id),r=evalItem(it),usage=it.type==='usage';
+  const logs=state.logs.filter(l=>l.item===id).sort((a,b)=>a.date<b.date?1:-1);
+  let html=`<h2>${it.name}</h2><div class="cat">${it.cat}${it.note?'　—　'+it.note:''}</div>`;
+
+  if(usage){
+    html+=`<button class="btn pri wide" onclick="quickLog('${id}')">今日 実施した（${state.odo.km!=null?num(state.odo.km)+' km':'距離未入力'}）</button>
+    <div class="hr"></div>
+    <div class="row">
+      <div class="fld"><label>前回の実施日</label><input id="e_dt" type="date" value="${it.lastDate||''}"></div>
+      <div class="fld"><label>そのときの距離 (km)</label><input id="e_km" type="number" inputmode="numeric" value="${it.lastKm??''}"></div>
+    </div>
+    <div class="row">
+      <div class="fld"><label>距離サイクル (km)</label><input id="e_kc" type="number" inputmode="numeric" value="${it.kmCycle??''}" placeholder="なし"></div>
+      <div class="fld"><label>期間サイクル (ヶ月)</label><input id="e_mc" type="number" inputmode="numeric" value="${it.monthCycle??''}" placeholder="なし"></div>
+    </div>`;
+  }else{
+    html+=`<div class="fld"><label>次回の期限</label><input id="e_nd" type="date" value="${r.dueDate||''}" ${it.type==='annual'?'disabled':''}></div>`;
+    if(it.type==='annual')html+=`<div class="cat">毎年 ${it.md.replace('-','月')}日 固定です</div>`;
+  }
+  html+=`<div class="fld"><label>メモ</label><textarea id="e_nt" placeholder="部品番号・トルク値・購入先など">${it.note||''}</textarea></div>
+    <div class="acts"><button class="btn" onclick="close_()">閉じる</button>
+    <button class="btn pri" onclick="itemSave('${id}')">保存</button></div>`;
+  if(logs.length){
+    html+=`<div class="hr"></div><div class="cat">履歴</div><div class="hist">`+
+      logs.map(l=>`<div>${jp(l.date)}　${l.km!=null?num(l.km)+' km':''}　${l.memo||''}</div>`).join('')+`</div>`;
+  }
+  if(it.custom)html+=`<div class="hr"></div><button class="btn wide" style="color:var(--over)" onclick="delItem('${id}')">この項目を削除</button>`;
+  open_(html);
+}
+function quickLog(id){
+  const it=state.items.find(x=>x.id===id);
+  it.lastDate=today(); it.lastKm=state.odo.km;
+  state.logs.push({item:id,date:today(),km:state.odo.km,memo:''});
+  save();close_();render();
+}
+function itemSave(id){
+  const it=state.items.find(x=>x.id===id),g=i=>document.getElementById(i);
+  if(it.type==='usage'){
+    const dt=g('e_dt').value,km=g('e_km').value;
+    const changed=(dt&&dt!==it.lastDate)||(km!==''&&+km!==it.lastKm);
+    it.lastDate=dt||null; it.lastKm=km===''?null:parseInt(km,10);
+    it.kmCycle=g('e_kc').value===''?null:parseInt(g('e_kc').value,10);
+    it.monthCycle=g('e_mc').value===''?null:parseInt(g('e_mc').value,10);
+    if(changed&&it.lastDate&&!state.logs.some(l=>l.item===id&&l.date===it.lastDate))
+      state.logs.push({item:id,date:it.lastDate,km:it.lastKm,memo:''});
+  }else if(it.type==='fixed'){ it.nextDate=g('e_nd').value||it.nextDate; }
+  it.note=g('e_nt').value;
+  save();close_();render();
+}
+function delItem(id){if(!confirm('この項目を削除しますか？'))return;state.items=state.items.filter(x=>x.id!==id);save();close_();render();}
+
+document.getElementById('addBtn').onclick=()=>{
+  open_(`<h2>項目を追加</h2><div class="cat">自分だけの点検項目を作れます</div>
+    <div class="fld"><label>項目名</label><input id="a_n" placeholder="例：ルーフキャリア ボルト増し締め"></div>
+    <div class="fld"><label>分類</label><input id="a_c" placeholder="例：ボディ" value="その他"></div>
+    <div class="row">
+      <div class="fld"><label>距離サイクル (km)</label><input id="a_k" type="number" inputmode="numeric" placeholder="なし"></div>
+      <div class="fld"><label>期間サイクル (ヶ月)</label><input id="a_m" type="number" inputmode="numeric" placeholder="なし"></div>
+    </div>
+    <div class="acts"><button class="btn" onclick="close_()">キャンセル</button>
+    <button class="btn pri" onclick="addSave()">追加</button></div>`);
+};
+function addSave(){
+  const n=document.getElementById('a_n').value.trim();
+  if(!n){alert('項目名を入力してください');return;}
+  const k=document.getElementById('a_k').value,m=document.getElementById('a_m').value;
+  if(k===''&&m===''){alert('距離か期間のどちらかのサイクルを入れてください');return;}
+  state.items.push({id:'c'+Date.now(),name:n,cat:document.getElementById('a_c').value.trim()||'その他',type:'usage',
+    kmCycle:k===''?null:+k,monthCycle:m===''?null:+m,lastKm:null,lastDate:null,note:'',custom:true});
+  save();close_();render();
+}
+
+/* ---------- 入出力 ---------- */
+document.getElementById('expBtn').onclick=()=>{
+  const s=JSON.stringify(state,null,2);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([s],{type:'application/json'}));
+  a.download=`delica-maint-${today()}.json`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+};
+document.getElementById('impBtn').onclick=()=>{
+  const i=document.createElement('input');i.type='file';i.accept='.json,application/json';
+  i.onchange=()=>{const f=i.files[0];if(!f)return;const rd=new FileReader();
+    rd.onload=()=>{try{const s=JSON.parse(rd.result);if(!s.items)throw 0;
+      if(confirm('現在のデータを置き換えます。よろしいですか？')){state=s;save();render();}
+    }catch(e){alert('読み込めませんでした');}};rd.readAsText(f);};
+  i.click();
+};
+document.getElementById('odoBtn').onclick=odoSheet;
+
+
+/* ---------- GAS 同期 ---------- */
+const SKEY='delica_d5_sync_v1';
+let cfg=(()=>{try{return JSON.parse(localStorage.getItem(SKEY))||{url:'',token:''};}catch(e){return{url:'',token:''};}})();
+let pushTimer=null;
+
+function setSync(s,msg){
+  const e=document.getElementById('syncSub');if(!e)return;
+  const m={off:'',ok:'\u2601\ufe0f 同期済み',pending:'\u2601\ufe0f 送信中…',error:'\u26a0\ufe0f 同期エラー'}[s]||'';
+  e.textContent=msg||m; e.style.color=(s==='error')?'var(--over)':'var(--tx3)';
+}
+async function api(action,extra){
+  if(!cfg.url||!cfg.token)throw new Error('同期が未設定です');
+  const r=await fetch(cfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(Object.assign({action:action,token:cfg.token},extra||{}))});
+  let j; try{j=await r.json();}catch(e){throw new Error('応答を解釈できません（URLを確認してください）');}
+  if(!j.ok)throw new Error(j.error||'エラー');
+  return j;
+}
+async function pull(){
+  if(!cfg.url)return;
+  setSync('pending','\u2601\ufe0f 読み込み中…');
+  try{const j=await api('load');state=j.state;save(true);render();setSync('ok');}
+  catch(e){setSync('error','\u26a0\ufe0f '+e.message+' — この端末のデータで動作中');}
+}
+async function push(){
+  if(!cfg.url)return;
+  setSync('pending');
+  try{await api('save',{state:state});setSync('ok');}
+  catch(e){setSync('error','\u26a0\ufe0f 未送信の変更があります（'+e.message+'）');}
+}
+function queuePush(){if(!cfg.url)return;clearTimeout(pushTimer);pushTimer=setTimeout(push,1200);}
+
+function cfgSheet(){
+  open_(`<h2>同期設定</h2><div class="cat">Google Apps Script のウェブアプリと接続します</div>
+    <div class="fld"><label>ウェブアプリ URL</label><input id="c_u" value="${cfg.url||''}" placeholder="https://script.google.com/macros/s/.../exec"></div>
+    <div class="fld"><label>API トークン</label><input id="c_t" value="${cfg.token||''}" placeholder="setup 実行時にログに出た文字列"></div>
+    <div class="acts"><button class="btn" onclick="close_()">閉じる</button>
+    <button class="btn pri" onclick="cfgSave()">接続テストして保存</button></div>`
+    +(cfg.url?`<div class="hr"></div><div class="cat">手動同期</div>
+    <button class="btn wide" onclick="pullNow()">サーバーのデータを取り込む（この端末を上書き）</button>
+    <button class="btn wide" style="margin-top:9px" onclick="pushNow()">この端末のデータを送る（サーバーを上書き）</button>`:''));
+}
+async function cfgSave(){
+  cfg.url=document.getElementById('c_u').value.trim();
+  cfg.token=document.getElementById('c_t').value.trim();
+  localStorage.setItem(SKEY,JSON.stringify(cfg));
+  setSync('pending','\u2601\ufe0f 接続中…');
+  try{await api('ping');close_();setSync('ok','\u2601\ufe0f 接続できました');await pull();}
+  catch(e){setSync('error','\u26a0\ufe0f '+e.message);alert('接続できませんでした\n'+e.message);}
+}
+async function pullNow(){if(!confirm('サーバーのデータでこの端末を上書きします。よろしいですか？'))return;close_();await pull();}
+async function pushNow(){if(!confirm('この端末のデータでサーバーを上書きします。よろしいですか？'))return;close_();await push();}
+document.getElementById('cfgBtn').onclick=cfgSheet;
+
+if('serviceWorker' in navigator&&location.protocol!=='file:')
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+render();
+if(cfg.url)pull();else setSync('off');
+</script>
+</body>
+</html>
