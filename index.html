@@ -97,6 +97,37 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);display:flex;gap:9px;flex-wrap:wrap}
 .foot .btn{flex:1;min-width:110px}
 .tiny{font-size:11px;color:var(--tx3);margin-top:16px;line-height:1.6}
+
+/* 記録・申し送り・写真 */
+.fld select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--tx);font:inherit;font-size:16px;min-height:44px}
+.secrow{display:flex;align-items:center;gap:10px;margin:26px 0 10px}
+.secrow .sec{margin:0;flex:1}
+.todo-b{background:linear-gradient(135deg,#2a1414,#1f2530);border:1px solid #5a2a2a;border-radius:14px;padding:13px 15px;margin:14px 0}
+.todo-b h3{font-size:14px;color:var(--over);margin-bottom:6px}
+.trow{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid rgba(255,255,255,.06);width:100%;text-align:left}
+.trow:first-of-type{border-top:none}
+.trow .bx{width:20px;height:20px;border:2px solid var(--tx2);border-radius:5px;flex:none;margin-top:2px}
+.trow .tx{font-size:14px;flex:1}
+.trow small{display:block;font-size:11px;color:var(--tx3)}
+.kind{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(255,138,61,.15);color:var(--accent);white-space:nowrap}
+.rmemo{font-size:13px;color:var(--tx2);margin-top:7px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 12px;border:1px solid var(--line);border-radius:20px;font-size:13px;background:var(--bg)}
+.chip.on{background:rgba(255,138,61,.18);border-color:var(--accent);color:var(--accent)}
+.ted{display:flex;gap:8px;align-items:center;margin-bottom:7px}
+.ted input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:var(--accent)}
+.ted input.tt{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;color:var(--tx);font:inherit;font-size:15px;min-height:42px}
+.ted .x{color:var(--tx3);font-size:18px;padding:0 6px;min-height:42px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-bottom:10px}
+.thumbs img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:9px;border:1px solid var(--line);display:block;background:var(--bg)}
+.chk{display:flex;gap:10px;align-items:center;font-size:14px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:13px}
+.chk input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+.viewer{position:fixed;inset:0;background:#000;z-index:60;display:none;flex-direction:column}
+.viewer.on{display:flex}
+.viewer .vimg{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center}
+.viewer img{max-width:100%;height:auto}
+.viewer .vbar{display:flex;gap:9px;padding:10px 16px calc(env(safe-area-inset-bottom) + 10px);background:#000}
+.viewer .vbar>*{flex:1}
 </style>
 </head>
 <body>
@@ -111,7 +142,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div class="sub" id="syncSub"></div>
   </header>
   <div id="banner"></div>
+  <div id="todos"></div>
   <div id="list"></div>
+  <div id="recs"></div>
   <div class="foot">
     <button class="btn" id="addBtn">＋ 項目を追加</button>
     <button class="btn" id="expBtn">エクスポート</button>
@@ -123,6 +156,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 <div class="mask" id="mask"></div>
 <div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+<div class="viewer" id="viewer"><div class="vimg"><img id="vImg" alt="写真"></div>
+  <div class="vbar"><button class="btn" id="vDel" style="color:var(--over)">この写真を削除</button><button class="btn pri" id="vClose">閉じる</button></div></div>
 <script>
 "use strict";
 const KEY='delica_d5_maint_v1', DAY=864e5, MON=30.44;
@@ -160,6 +195,23 @@ const SEED={
 /* ---------- 保存 ---------- */
 let state=load();
 function load(){try{const r=localStorage.getItem(KEY);if(r){const s=JSON.parse(r);if(s&&s.items)return s;}}catch(e){}return JSON.parse(JSON.stringify(SEED));}
+
+/* 記録機能の追加に伴うデータ補完。初回だけ 2026/11/06 車検の内容を入れておく */
+const SEED_REC={id:'r20261106',date:'2026-11-06',km:null,kind:'車検',shop:'',cost:null,
+  memo:'ブレーキパッド 残り4mm（約半分）→ 次回車検で交換と言われた\nエアコンフィルター交換を勧められた → DIYで交換予定（純正 7803A005 / BOSCH M01）\nオイル交換はセルフのため見送り',
+  todos:[{t:'ブレーキパッド残量確認（残4mm）。1年後に測って3mm以下なら交換',done:false},
+         {t:'エアコンフィルターをDIY交換（純正 7803A005 / BOSCH M01）',done:false},
+         {t:'エンジンオイル交換（セルフ）',done:false}],
+  items:[],photos:[]};
+function normalize(){
+  let ch=false;
+  if(!Array.isArray(state.records)){state.records=[];ch=true;}
+  if(!state.recSeeded){if(!state.records.some(r=>r.id===SEED_REC.id))state.records.push(JSON.parse(JSON.stringify(SEED_REC)));state.recSeeded=true;ch=true;}
+  return ch;
+}
+if(normalize())localStorage.setItem(KEY,JSON.stringify(state));
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function yen(n){return n==null||n===''?'':'¥'+Number(n).toLocaleString('ja-JP');}
 function save(skipPush){localStorage.setItem(KEY,JSON.stringify(state));if(!skipPush)queuePush();}
 
 /* ---------- 日付ユーティリティ ---------- */
@@ -239,9 +291,12 @@ function render(){
   if(known.length){list.appendChild(h('div','sec','管理中'));known.forEach(x=>list.appendChild(card(x[0],x[1])));}
   if(unset.length){list.appendChild(h('div','sec','未設定 — 前回の実施日を入れると管理が始まります'));unset.forEach(x=>list.appendChild(card(x[0],x[1])));}
 
+  renderTodos();
+  renderRecs();
   document.getElementById('tiny').textContent=
     `車台番号 ${v.vin}　／　型式指定 ${v.typeNo}・類別 ${v.classNo}（部品検索に使えます）　／　初度登録 ${v.first}　／　車両重量 ${v.weight}kg
-データはこの端末のブラウザ内にのみ保存されます。整備サイクルの初期値は一般的な目安です。整備手帳で確認して各項目から上書きしてください。`;
+データはこの端末のブラウザ内にのみ保存されます。整備サイクルの初期値は一般的な目安です。整備手帳で確認して各項目から上書きしてください。
+請求書などの写真はこの端末だけに保存され、同期されません。機種変更のときは「エクスポート」で写真ごと書き出してください。`;
 }
 function h(t,c,txt){const e=document.createElement(t);if(c)e.className=c;if(txt)e.textContent=txt;return e;}
 
@@ -275,7 +330,7 @@ function card(it,r){
 /* ---------- シート ---------- */
 const mask=document.getElementById('mask'),sheet=document.getElementById('sheet'),sbody=document.getElementById('sheetBody');
 function open_(html){sbody.innerHTML=html;mask.classList.add('on');requestAnimationFrame(()=>sheet.classList.add('on'));}
-function close_(){sheet.classList.remove('on');mask.classList.remove('on');}
+function close_(){if(draft)discardDraft();sheet.classList.remove('on');mask.classList.remove('on');}
 mask.onclick=close_;
 
 function odoSheet(){
@@ -323,6 +378,7 @@ function itemSheet(id){
     html+=`<div class="hr"></div><div class="cat">履歴</div><div class="hist">`+
       logs.map(l=>`<div>${jp(l.date)}　${l.km!=null?num(l.km)+' km':''}　${l.memo||''}</div>`).join('')+`</div>`;
   }
+  if(id==='shaken')html+=`<div class="hr"></div><button class="btn wide" onclick="close_();recSheet()">車検を受けた → 記録をつける（満了日も更新）</button>`;
   if(it.custom)html+=`<div class="hr"></div><button class="btn wide" style="color:var(--over)" onclick="delItem('${id}')">この項目を削除</button>`;
   open_(html);
 }
@@ -369,19 +425,210 @@ function addSave(){
   save();close_();render();
 }
 
-/* ---------- 入出力 ---------- */
-document.getElementById('expBtn').onclick=()=>{
-  const s=JSON.stringify(state,null,2);
+/* ---------- 写真ストア（IndexedDB）。localStorage は容量が小さいので写真はこちらに保存 ---------- */
+const PDB=(()=>{
+  let p=null;
+  const db=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open('d5_photos',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('p');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}));
+  const tx=(mode,fn)=>db().then(d=>new Promise((res,rej)=>{const t=d.transaction('p',mode);const q=fn(t.objectStore('p'));
+    t.oncomplete=()=>res(q.result);t.onerror=()=>rej(t.error);}));
+  return{put:(k,v)=>tx('readwrite',s=>s.put(v,k)),get:k=>tx('readonly',s=>s.get(k)),del:k=>tx('readwrite',s=>s.delete(k))};
+})();
+const purl={};  // 写真ID → 表示用URL のキャッシュ
+async function photoURL(id){if(purl[id])return purl[id];const b=await PDB.get(id);if(!b)return'';return purl[id]=URL.createObjectURL(b);}
+// 長辺2000pxのJPEGに縮小（請求書の小さい文字が読める程度で容量を抑える）
+async function shrink(file){
+  const u=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=u;});
+    const sc=Math.min(1,2000/Math.max(img.naturalWidth,img.naturalHeight));
+    const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    return await new Promise(r=>c.toBlob(r,'image/jpeg',.78));
+  }finally{URL.revokeObjectURL(u);}
+}
+
+/* ---------- 申し送り（未対応の注意点）---------- */
+function openTodos(){
+  const a=[];
+  state.records.forEach(r=>(r.todos||[]).forEach((t,i)=>{if(!t.done&&t.t)a.push({r,t,i});}));
+  return a.sort((x,y)=>x.r.date<y.r.date?1:-1);
+}
+function renderTodos(){
+  const el=document.getElementById('todos'),a=openTodos();
+  if(!a.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="todo-b"><h3>申し送り・注意点（${a.length}件）</h3>`+
+    a.map(x=>`<button class="trow" onclick="toggleTodo('${x.r.id}',${x.i})"><span class="bx"></span>
+      <span class="tx">${esc(x.t.t)}<small>${jp(x.r.date)} ${esc(x.r.kind)}の記録より　— タップで対応済み</small></span></button>`).join('')+`</div>`;
+}
+function toggleTodo(rid,i){
+  const r=state.records.find(x=>x.id===rid);if(!r)return;
+  if(!confirm(`「${r.todos[i].t}」を対応済みにしますか？`))return;
+  r.todos[i].done=true;save();render();
+}
+
+/* ---------- 記録一覧 ---------- */
+function renderRecs(){
+  const el=document.getElementById('recs');el.innerHTML='';
+  const row=h('div','secrow');row.appendChild(h('div','sec','整備・車検の記録'));
+  const b=h('button','btn sm','＋ 記録');b.onclick=()=>recSheet();row.appendChild(b);el.appendChild(row);
+  const rs=[...state.records].sort((a,b)=>a.date<b.date?1:-1);
+  if(!rs.length){el.appendChild(h('div','sub','まだ記録がありません。車検や修理のときに、注意点と請求書の写真を残しましょう。'));return;}
+  rs.forEach(r=>{
+    const c=h('button','card'),open=(r.todos||[]).filter(t=>!t.done&&t.t).length;
+    const sub=[r.km!=null?num(r.km)+' km':'',r.shop?esc(r.shop):'',r.photos&&r.photos.length?'📷 '+r.photos.length:'',open?`<span style="color:var(--over)">申し送り ${open}</span>`:''].filter(Boolean).join('　');
+    c.innerHTML=`<div class="ch"><h4>${jp(r.date)}</h4><span class="kind">${esc(r.kind)}</span>
+      <span style="font-weight:700;font-variant-numeric:tabular-nums">${yen(r.cost)}</span></div>
+      ${sub?`<div class="meta" style="margin-top:6px;color:var(--tx2)">${sub}</div>`:''}
+      ${r.memo?`<div class="rmemo">${esc(r.memo)}</div>`:''}`;
+    c.onclick=()=>recSheet(r.id);el.appendChild(c);
+  });
+}
+
+/* ---------- 記録の編集シート ---------- */
+let draft=null;  // 編集中の記録 {rec,isNew,added:[追加した写真],removed:[削除予定の写真]}
+const KINDS=['車検','12ヶ月点検','オイル交換','整備','修理','タイヤ','部品購入','その他'];
+function recSheet(id){
+  const src=id?state.records.find(r=>r.id===id):null;
+  const rec=src?JSON.parse(JSON.stringify(src))
+    :{id:'r'+Date.now(),date:today(),km:state.odo.km,kind:'車検',shop:'',cost:null,memo:'',todos:[],items:[],photos:[]};
+  rec.todos=rec.todos||[];rec.items=rec.items||[];rec.photos=rec.photos||[];
+  const sh=state.items.find(x=>x.id==='shaken');
+  open_(`<h2>${src?'記録の編集':'記録を追加'}</h2><div class="cat">車検・整備・修理の内容と請求書を残します</div>
+    <div class="row">
+      <div class="fld"><label>日付</label><input id="r_dt" type="date" value="${rec.date}"></div>
+      <div class="fld"><label>種別</label><select id="r_kd">${KINDS.concat(KINDS.includes(rec.kind)?[]:[rec.kind]).map(k=>`<option${k===rec.kind?' selected':''}>${esc(k)}</option>`).join('')}</select></div>
+    </div>
+    <div class="row">
+      <div class="fld"><label>走行距離 (km)</label><input id="r_km" type="number" inputmode="numeric" value="${rec.km??''}"></div>
+      <div class="fld"><label>金額 (円)</label><input id="r_co" type="number" inputmode="numeric" value="${rec.cost??''}" placeholder="請求額"></div>
+    </div>
+    <div class="fld"><label>店舗・依頼先</label><input id="r_sh" value="${esc(rec.shop)}" placeholder="例：〇〇三菱 吹田店"></div>
+    ${sh&&!rec.shakenApplied?`<label class="chk" id="r_shw" style="${rec.kind==='車検'?'':'display:none'}"><input type="checkbox" id="r_sk" checked>
+      車検の満了日を更新（${jp(sh.nextDate)} → ${jp(nextShaken(rec.date))}）</label>`:''}
+    <div class="fld"><label>請求書・見積書の写真</label><div class="thumbs" id="r_ph"></div>
+      <button class="btn wide" onclick="addPhoto()">📷 撮影・写真を追加</button></div>
+    <div class="fld"><label>作業内容・指摘事項</label><textarea id="r_me" style="min-height:96px" placeholder="例：ブレーキパッド残4mm／ワイパー交換／○○に滲みあり">${esc(rec.memo)}</textarea></div>
+    <div class="fld"><label>申し送り（次回までにやること・注意点）</label><div id="r_td"></div>
+      <button class="btn sm" onclick="addTodoRow()">＋ 追加</button></div>
+    <div class="fld"><label>この記録で実施した項目（前回実施日が更新されます）</label>
+      <div class="chips">${state.items.filter(x=>x.type==='usage').map(x=>`<button class="chip${rec.items.includes(x.id)?' on':''}" data-id="${x.id}" onclick="this.classList.toggle('on')">${esc(x.name)}</button>`).join('')}</div></div>
+    <div class="acts"><button class="btn" onclick="close_()">キャンセル</button>
+    <button class="btn pri" onclick="recSave()">保存</button></div>
+    ${src?`<div class="hr"></div><button class="btn wide" style="color:var(--over)" onclick="recDel()">この記録を削除</button>`:''}`);
+  draft={rec,isNew:!src,added:[],removed:[]};
+  document.getElementById('r_kd').onchange=e=>{const w=document.getElementById('r_shw');if(w)w.style.display=e.target.value==='車検'?'':'none';};
+  drawTodoRows();drawThumbs();
+}
+// 満了日の2ヶ月前以内に受けた車検は、元の満了日から2年延長される
+function nextShaken(d){const sh=state.items.find(x=>x.id==='shaken');return addMo(d<=sh.nextDate?sh.nextDate:d,24);}
+
+function readTodoRows(){
+  draft.rec.todos=[...document.querySelectorAll('#r_td .ted')].map(r=>({t:r.querySelector('.tt').value,done:r.querySelector('input[type=checkbox]').checked}));
+}
+function drawTodoRows(){
+  document.getElementById('r_td').innerHTML=draft.rec.todos.map((t,i)=>`<div class="ted">
+    <input type="checkbox"${t.done?' checked':''} title="対応済み"><input class="tt" value="${esc(t.t)}" placeholder="例：ブレーキパッド交換">
+    <button class="x" onclick="delTodoRow(${i})">✕</button></div>`).join('');
+}
+function addTodoRow(){readTodoRows();draft.rec.todos.push({t:'',done:false});drawTodoRows();
+  const a=document.querySelectorAll('#r_td .tt');a[a.length-1].focus();}
+function delTodoRow(i){readTodoRows();draft.rec.todos.splice(i,1);drawTodoRows();}
+
+async function drawThumbs(){
+  const el=document.getElementById('r_ph');if(!el||!draft)return;
+  const ids=draft.rec.photos;
+  const urls=await Promise.all(ids.map(photoURL));
+  el.innerHTML=ids.map((id,i)=>`<img src="${urls[i]}" onclick="viewPhoto('${id}',true)" alt="写真">`).join('');
+}
+function addPhoto(){
+  // capture を付けないことで、iPhone/Android とも「撮影」と「ライブラリ」を選べる
+  const i=document.createElement('input');i.type='file';i.accept='image/*';i.multiple=true;
+  i.onchange=async()=>{
+    for(const f of i.files){
+      try{const b=await shrink(f);const id='p'+Date.now()+Math.random().toString(36).slice(2,6);
+        await PDB.put(id,b);draft.added.push(id);draft.rec.photos.push(id);}
+      catch(e){alert('写真を読み込めませんでした：'+f.name);}
+    }
+    drawThumbs();
+  };
+  i.click();
+}
+const viewer=document.getElementById('viewer');let vId=null;
+async function viewPhoto(id,editable){
+  vId=id;document.getElementById('vImg').src=await photoURL(id);
+  document.getElementById('vDel').style.display=editable?'':'none';viewer.classList.add('on');
+}
+document.getElementById('vClose').onclick=()=>viewer.classList.remove('on');
+document.getElementById('vDel').onclick=()=>{
+  if(!draft||!confirm('この写真を削除しますか？'))return;
+  draft.rec.photos=draft.rec.photos.filter(x=>x!==vId);
+  if(draft.added.includes(vId)){draft.added=draft.added.filter(x=>x!==vId);PDB.del(vId);}else draft.removed.push(vId);
+  viewer.classList.remove('on');drawThumbs();
+};
+function discardDraft(){draft.added.forEach(id=>PDB.del(id));draft=null;}
+
+function recSave(){
+  const g=i=>document.getElementById(i),rec=draft.rec;
+  readTodoRows();
+  rec.date=g('r_dt').value||today();
+  rec.kind=g('r_kd').value;
+  rec.km=g('r_km').value===''?null:parseInt(g('r_km').value,10);
+  rec.cost=g('r_co').value===''?null:parseInt(g('r_co').value,10);
+  rec.shop=g('r_sh').value.trim();
+  rec.memo=g('r_me').value.trim();
+  rec.todos=rec.todos.filter(t=>t.t.trim()).map(t=>({t:t.t.trim(),done:t.done}));
+  rec.items=[...document.querySelectorAll('.chip.on')].map(c=>c.dataset.id);
+
+  // 実施した項目の前回実施日・距離を更新
+  rec.items.forEach(id=>{
+    const it=state.items.find(x=>x.id===id);if(!it)return;
+    if(!it.lastDate||rec.date>=it.lastDate){it.lastDate=rec.date;if(rec.km!=null)it.lastKm=rec.km;}
+    if(!state.logs.some(l=>l.item===id&&l.date===rec.date))state.logs.push({item:id,date:rec.date,km:rec.km,memo:rec.kind+'の記録'});
+  });
+  // 車検の満了日を更新
+  const sk=g('r_sk');
+  if(rec.kind==='車検'&&sk&&sk.checked){
+    const sh=state.items.find(x=>x.id==='shaken');sh.nextDate=nextShaken(rec.date);sh.lastDate=rec.date;rec.shakenApplied=true;
+  }
+  // 走行距離が今より新しければメーター値も更新
+  if(rec.km!=null&&(state.odo.km==null||(rec.date>=state.odo.date&&rec.km>state.odo.km))){
+    if(state.odo.km!=null&&state.odo.date!==rec.date)state.odoHistory.push({date:state.odo.date,km:state.odo.km});
+    state.odo={km:rec.km,date:rec.date};
+  }
+  draft.removed.forEach(id=>PDB.del(id));
+  const i=state.records.findIndex(x=>x.id===rec.id);
+  if(i<0)state.records.push(rec);else state.records[i]=rec;
+  draft=null;save();close_();render();
+}
+function recDel(){
+  if(!confirm('この記録と写真を削除しますか？'))return;
+  const rec=draft.rec,src=state.records.find(x=>x.id===rec.id);
+  new Set([...(src?src.photos:[]),...rec.photos]).forEach(id=>PDB.del(id));
+  state.records=state.records.filter(x=>x.id!==rec.id);
+  draft=null;save();close_();render();
+}
+
+/* ---------- 入出力（写真も含めて書き出す） ---------- */
+document.getElementById('expBtn').onclick=async()=>{
+  const out=JSON.parse(JSON.stringify(state));out.photos={};
+  for(const r of state.records)for(const id of (r.photos||[])){
+    const b=await PDB.get(id);if(!b)continue;
+    out.photos[id]=await new Promise(res=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.readAsDataURL(b);});
+  }
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([s],{type:'application/json'}));
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(out)],{type:'application/json'}));
   a.download=`delica-maint-${today()}.json`;a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),3000);
 };
 document.getElementById('impBtn').onclick=()=>{
   const i=document.createElement('input');i.type='file';i.accept='.json,application/json';
   i.onchange=()=>{const f=i.files[0];if(!f)return;const rd=new FileReader();
-    rd.onload=()=>{try{const s=JSON.parse(rd.result);if(!s.items)throw 0;
-      if(confirm('現在のデータを置き換えます。よろしいですか？')){state=s;save();render();}
+    rd.onload=async()=>{try{const s=JSON.parse(rd.result);if(!s.items)throw 0;
+      if(!confirm('現在のデータを置き換えます。よろしいですか？'))return;
+      const ph=s.photos||{};delete s.photos;
+      for(const id in ph){const b=await (await fetch(ph[id])).blob();await PDB.put(id,b);}
+      state=s;normalize();save();render();
     }catch(e){alert('読み込めませんでした');}};rd.readAsText(f);};
   i.click();
 };
@@ -409,7 +656,7 @@ async function api(action,extra){
 async function pull(){
   if(!cfg.url)return;
   setSync('pending','\u2601\ufe0f 読み込み中…');
-  try{const j=await api('load');state=j.state;save(true);render();setSync('ok');}
+  try{const j=await api('load');state=j.state;const ch=normalize();save(!ch);render();setSync('ok');}
   catch(e){setSync('error','\u26a0\ufe0f '+e.message+' — この端末のデータで動作中');}
 }
 async function push(){
